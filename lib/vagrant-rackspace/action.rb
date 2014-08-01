@@ -12,15 +12,22 @@ module VagrantPlugins
       def self.action_destroy
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConfigValidate
-          b.use Call, IsCreated do |env, b2|
+          b.use Call, IsCreated do |env, b1|
             if !env[:result]
-              b2.use MessageNotCreated
+              b1.use MessageNotCreated
               next
             end
 
-            b2.use ConnectRackspace
-            b2.use DeleteServer
-            b2.use ProvisionerCleanup if defined?(ProvisionerCleanup)
+            b1.use Call, DestroyConfirm do |env1, b2|
+              if env1[:result]
+                b2.use ConnectRackspace
+                b2.use DeleteServer
+                b2.use ProvisionerCleanup if defined?(ProvisionerCleanup)
+              else
+                b2.use Message, I18n.t("vagrant_rackspace.will_not_destroy")
+                next
+              end
+            end
           end
         end
       end
@@ -121,7 +128,7 @@ module VagrantPlugins
           b.use ConfigValidate
           b.use Call, IsCreated do |env, b2|
             created = env[:result]
-            
+
             if !created
               b2.use MessageNotCreated
               next
@@ -150,6 +157,13 @@ module VagrantPlugins
         end
       end
 
+      def self.action_list_keypairs
+        Vagrant::Action::Builder.new.tap do |b|
+          b.use ConnectRackspace
+          b.use ListKeyPairs
+        end
+      end
+
       # The autoload farm
       action_root = Pathname.new(File.expand_path("../action", __FILE__))
       autoload :ConnectRackspace, action_root.join("connect_rackspace")
@@ -164,6 +178,9 @@ module VagrantPlugins
       autoload :CreateImage, action_root.join("create_image")
       autoload :ListImages, action_root.join("list_images")
       autoload :ListFlavors, action_root.join("list_flavors")
+      autoload :ListKeyPairs, action_root.join("list_keypairs")
+      autoload :ListNetworks, action_root.join("list_networks")
+      autoload :ListServers, action_root.join("list_servers")
     end
   end
 end

@@ -31,10 +31,51 @@ module VagrantPlugins
 
           # Read the DNS info
           return {
-            :host => server.ipv4_address,
+            :host => get_ip(server, machine),
             :port => 22,
             :username => "root"
           }
+        end
+        
+        def get_ip(server, machine)
+                
+          # Default to public networking
+          ip_network = 'public'
+          
+          machine.config.vm.networks.each do |type, options|
+            # We only handle private and public networks
+            next if type != :private_network && type != :public_network
+            
+            if type == :private_network
+              @logger.info("Private network selected.")
+              ip_network = 'private'
+              
+              if options[:ip]
+                @logger.info("Static IP not supported by this provider. Using DHCP.")
+              end
+              break
+            end
+          end
+          
+          # Retrieve IP addresses for specified network
+          if !server.addresses.has_key?(ip_network)
+            # The network can't be found
+            @logger.info("IP network couldn't be found. Returning default IP address.")
+            return server.ipv4_address
+          end
+          
+          # Find IPv4 address
+          addresses = server.addresses.fetch(ip_network)
+          addresses.each do |address|
+            if address.fetch('version') == 4
+              return address.fetch('addr')
+            end
+          end
+          
+          # Return the default IP address if a suitable address cannot be found
+          @logger.info("Suitable address couldn't be found in the specified network. Returning default IP address.")
+          return server.ipv4_address
+                      
         end
       end
     end

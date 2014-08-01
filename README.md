@@ -168,12 +168,27 @@ end
 
 ## Networks
 
-Networking features in the form of `config.vm.network` are not
-supported with `vagrant-rackspace`, currently. If any of these are
-specified, Vagrant will emit a warning, but will otherwise boot
-the Rackspace server.
+### Public Network
 
-However, you may attach a VM to an isolated [Cloud Network](http://www.rackspace.com/knowledge_center/article/getting-started-with-cloud-networks) (or Networks) using the `network` configuration option. Here's an example which adds two Cloud Networks and disables ServiceNet with the `:attach => false` option:
+Public networking with DHCP IP assignment is supported and is the default if unspecified.
+
+```ruby
+Vagrant.configure("2") do |config|
+  config.vm.network "public_network"
+end
+```
+
+### Private Network
+
+Private networking with DHCP assignment is supported. If you are using ServiceNet to connect to your instances, you will need to select this configuration. Assignment of static IPs is not currently supported.
+
+```ruby
+Vagrant.configure("2") do |config|
+  config.vm.network "private_network", type: "dhcp"
+end
+```
+
+You may attach a VM to an isolated [Cloud Network](http://www.rackspace.com/knowledge_center/article/getting-started-with-cloud-networks) (or Networks) using the `network` configuration option. Here's an example which adds two Cloud Networks and disables ServiceNet with the `:attach => false` option:
 
 ```ruby
 config.vm.provider :rackspace do |rs|

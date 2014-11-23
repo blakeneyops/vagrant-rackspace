@@ -30,10 +30,12 @@ module VagrantPlugins
           end
 
           # Read the DNS info
+          user = machine.config.ssh.username
+          @logger.info("SSH username: " + user)
           return {
             :host => get_ip(server, machine),
             :port => 22,
-            :username => "root"
+            :username => user
           }
         end
         

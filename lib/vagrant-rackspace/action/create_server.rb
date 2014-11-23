@@ -75,9 +75,11 @@ module VagrantPlugins
             options[:key_name] = config.key_name
             env[:ui].info(" -- Key Name: #{config.key_name}")
           else
+            user = env[:machine].config.ssh.username
+            @logger.info("Personality: " + user)
             options[:personality] = [
               {
-                :path     => "/root/.ssh/authorized_keys",
+                :path     => "/home/" + user + "/.ssh/authorized_keys",
                 :contents => Base64.encode64(File.read(public_key_path))
               }
             ]
